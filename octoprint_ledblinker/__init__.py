@@ -36,12 +36,12 @@ class LedblinkerPlugin(octoprint.plugin.SettingsPlugin,
         t.start()
 
     def led_off(self):
-        # self._logger.info("Thread")
-        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.LOW)
+        # self._logger.info("Alt1")
+        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.HIGH)
 
     def led_on(self):
-        # self._logger.info("Thread2")
-        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.HIGH)
+        # self._logger.info("Alt2")
+        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.LOW)
 
     ##~~ SettingsPlugin mixin
 
