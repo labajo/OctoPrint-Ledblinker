@@ -10,50 +10,82 @@ from __future__ import absolute_import
 # Take a look at the documentation on what other plugin mixins are available.
 
 import octoprint.plugin
+import RPi.GPIO as GPIO
+from .utils.PerpetualAlternatedTimer import PerpetualAlternatedTimer
+
 
 class LedblinkerPlugin(octoprint.plugin.SettingsPlugin,
                        octoprint.plugin.AssetPlugin,
-                       octoprint.plugin.TemplatePlugin):
+                       octoprint.plugin.TemplatePlugin,
+                       octoprint.plugin.StartupPlugin):
+    ##~~ StartupPlugin mixin
 
-	##~~ SettingsPlugin mixin
+    def on_startup(self, *args, **kwargs):
+        self._logger.info("GPIOBlinker starting up")
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setwarnings(False)
+        GPIO.setup(self.get_settings_defaults()['led_pin'], GPIO.OUT, initial=GPIO.HIGH)
 
-	def get_settings_defaults(self):
-		return dict(
-			# put your plugin's default settings here
-		)
+    def on_after_startup(self):
+        self._logger.info("GPIOBlinker started up")
+        t = PerpetualAlternatedTimer(self.get_settings_defaults()['off_delay'],
+                                     self.get_settings_defaults()['on_delay'],
+                                     self.led_off,
+                                     self.led_on
+                                     )
+        t.start()
 
-	##~~ AssetPlugin mixin
+    def led_off(self):
+        # self._logger.info("Thread")
+        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.LOW)
 
-	def get_assets(self):
-		# Define your plugin's asset files to automatically include in the
-		# core UI here.
-		return dict(
-			js=["js/ledblinker.js"],
-			css=["css/ledblinker.css"],
-			less=["less/ledblinker.less"]
-		)
+    def led_on(self):
+        # self._logger.info("Thread2")
+        GPIO.output(self.get_settings_defaults()['led_pin'], GPIO.HIGH)
 
-	##~~ Softwareupdate hook
+    ##~~ SettingsPlugin mixin
 
-	def get_update_information(self):
-		# Define the configuration for your plugin to use with the Software Update
-		# Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
-		# for details.
-		return dict(
-			ledblinker=dict(
-				displayName="Ledblinker Plugin",
-				displayVersion=self._plugin_version,
+    def get_settings_defaults(self):
+        return dict(
+            {
+                'led_pin': 16,
+                'off_delay': 10,
+                'on_delay': 1
+            }
+        )
 
-				# version check: github repository
-				type="github_release",
-				user="labajo",
-				repo="OctoPrint-Ledblinker",
-				current=self._plugin_version,
+    ##~~ AssetPlugin mixin
 
-				# update method: pip
-				pip="https://github.com/labajo/OctoPrint-Ledblinker/archive/{target_version}.zip"
-			)
-		)
+    def get_assets(self):
+        # Define your plugin's asset files to automatically include in the
+        # core UI here.
+        return dict(
+            js=["js/ledblinker.js"],
+            css=["css/ledblinker.css"],
+            less=["less/ledblinker.less"]
+        )
+
+    ##~~ Softwareupdate hook
+
+    def get_update_information(self):
+        # Define the configuration for your plugin to use with the Software Update
+        # Plugin here. See https://github.com/foosel/OctoPrint/wiki/Plugin:-Software-Update
+        # for details.
+        return dict(
+            ledblinker=dict(
+                displayName="Ledblinker Plugin",
+                displayVersion=self._plugin_version,
+
+                # version check: github repository
+                type="github_release",
+                user="labajo",
+                repo="OctoPrint-Ledblinker",
+                current=self._plugin_version,
+
+                # update method: pip
+                pip="https://github.com/labajo/OctoPrint-Ledblinker/archive/{target_version}.zip"
+            )
+        )
 
 
 # If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
@@ -61,12 +93,12 @@ class LedblinkerPlugin(octoprint.plugin.SettingsPlugin,
 # can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
 __plugin_name__ = "Ledblinker Plugin"
 
+
 def __plugin_load__():
-	global __plugin_implementation__
-	__plugin_implementation__ = LedblinkerPlugin()
+    global __plugin_implementation__
+    __plugin_implementation__ = LedblinkerPlugin()
 
-	global __plugin_hooks__
-	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
-	}
-
+    global __plugin_hooks__
+    __plugin_hooks__ = {
+        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+    }
