@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_ledblinker/templates *
+recursive-include octoprint_ledblinker/translations *
+recursive-include octoprint_ledblinker/static *
